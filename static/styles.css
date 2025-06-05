@@ -1,0 +1,148 @@
+/* Road Segments Toggle Button */
+.leaflet-control-road-segments-toggle {
+    background-color: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.leaflet-control-road-segments-toggle:hover {
+    background-color: #f4f4f4;
+}
+
+.leaflet-control-road-segments-toggle.active {
+    background-color: #e6e6e6;
+}
+
+/* Dark mode styles for road segments toggle */
+.dark-mode .leaflet-control-road-segments-toggle {
+    background-color: #2b2b2b;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.dark-mode .leaflet-control-road-segments-toggle:hover {
+    background-color: #3c3f41;
+}
+
+.dark-mode .leaflet-control-road-segments-toggle.active {
+    background-color: #4b4b4b;
+}
+
+.leaflet-control-road-segments-toggle i {
+    font-size: 16px;
+    color: #333;
+}
+
+.dark-mode .leaflet-control-road-segments-toggle i {
+    color: #fff;
+}
+
+/* Road Segment Popup */
+.segment-popup {
+    padding: 10px;
+    min-width: 200px;
+}
+
+.segment-popup h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.segment-popup p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #34495e;
+}
+
+.segment-popup strong {
+    color: #2c3e50;
+}
+
+/* Dark mode styles */
+.dark .segment-popup {
+    background-color: #2d3436;
+    color: #ecf0f1;
+}
+
+.dark .segment-popup h4 {
+    color: #ecf0f1;
+}
+
+.dark .segment-popup p {
+    color: #bdc3c7;
+}
+
+.dark .segment-popup strong {
+    color: #ecf0f1;
+}
+
+/* Road Segments Toggle Button */
+.road-segments-toggle {
+    background-color: #4b6eaf;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    margin-left: 10px;
+}
+
+.road-segments-toggle:hover {
+    background-color: #5b7ebf;
+}
+
+.road-segments-toggle.active {
+    background-color: #3b5e9f;
+}
+
+/* Dark mode styles for road segments toggle */
+.dark-mode .road-segments-toggle {
+    background-color: #4b6eaf;
+    color: #ffffff;
+}
+
+.dark-mode .road-segments-toggle:hover {
+    background-color: #5b7ebf;
+}
+
+.dark-mode .road-segments-toggle.active {
+    background-color: #3b5e9f;
+}
+
+/* Road Segments Legend */
+.road-segments-legend {
+    display: none;
+}
+
+.road-segments-legend h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.road-segments-legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+.road-segments-legend-color {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    border-radius: 4px;
+} 

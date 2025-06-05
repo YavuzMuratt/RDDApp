@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - Road Damage Detection{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 1rem;
+        padding: 1.5rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+        z-index: 1;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-card i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .stat-card h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+        color: var(--card-text-color);
+    }
+    
+    .stat-card p {
+        position: relative;
+        z-index: 2;
+        opacity: 0.9;
+        color: var(--card-text-color);
+    }
+    
+    .stat-card.primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        --card-text-color: var(--primary-text-color);
+    }
+    
+    .stat-card.secondary {
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+        --card-text-color: var(--secondary-text-color);
+    }
+    
+    .stat-card.accent {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+        --card-text-color: var(--accent-text-color);
+    }
+    
+    .stat-card.info {
+        background: linear-gradient(135deg, var(--info) 0%, var(--info-dark) 100%);
+        --card-text-color: var(--info-text-color);
+    }
+
+    /* Dark mode specific styles */
+    [data-theme="dark"] .stat-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="dark"] .stat-card:hover {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Light mode specific styles */
+    [data-theme="light"] .stat-card.primary {
+        --card-text-color: #ffffff;
+    }
+
+    [data-theme="light"] .stat-card.secondary {
+        --card-text-color: #ffffff;
+    }
+
+    [data-theme="light"] .stat-card.accent {
+        --card-text-color: #ffffff;
+    }
+
+    [data-theme="light"] .stat-card.info {
+        --card-text-color: #ffffff;
+    }
+
+    .chart-card {
+        border-radius: 1rem;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .chart-card:hover {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .chart-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 1.25rem;
+    }
+
+    .chart-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .filter-card {
+        border-radius: 1rem;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-card:hover {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .filter-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .select-wrapper {
+        position: relative;
+        background: var(--card-background);
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .select-wrapper:hover {
+        transform: translateY(-1px);
+    }
+
+    .select-wrapper::after {
+        content: '\f078';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--accent-color);
+        transition: all 0.3s ease;
+    }
+
+    .select-wrapper:hover::after {
+        color: var(--primary-color);
+    }
+
+    .custom-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding: 0.75rem 1rem;
+        padding-right: 2.5rem;
+        width: 100%;
+        background-color: var(--card-background);
+        border: 2px solid var(--border-color);
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        color: var(--text-color);
+        cursor: pointer;
+    }
+
+    .custom-select option {
+        color: var(--text-color);
+        background-color: var(--card-background);
+        padding: 0.5rem;
+    }
+
+    .custom-select:hover {
+        border-color: var(--accent-color);
+    }
+
+    .custom-select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(var(--accent-color), 0.1);
+    }
+
+    .filter-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .select-wrapper:hover .filter-label {
+        color: var(--accent-color);
+    }
+
+    .export-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .export-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s ease, height 0.3s ease;
+    }
+
+    .export-btn:hover::after {
+        width: 300%;
+        height: 300%;
+    }
+
+    .problem-area-row {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        color: var(--text-primary);
+    }
+
+    .problem-area-row:hover {
+        background-color: rgba(var(--primary-rgb), 0.05);
+    }
+
+    .problem-area-row th {
+        color: var(--text-secondary);
+    }
+
+    .problem-area-row td {
+        color: var(--text-primary);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    .chart-card .card-header h5 {
+        color: var(--text-primary);
+    }
+
+    .chart-card .card-header i {
+        color: var(--primary);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .chart-card,
+        .filter-card {
+            background: var(--dark-bg);
+        }
+
+        .select-wrapper {
+            background: var(--card-background);
+        }
+
+        .custom-select {
+            background-color: var(--card-background);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .custom-select option {
+            color: var(--text-color);
+            background-color: var(--card-background);
+        }
+
+        .custom-select:hover {
+            border-color: var(--accent-color);
+        }
+
+        .custom-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(var(--accent-color), 0.1);
+        }
+
+        .filter-label {
+            color: var(--text-color);
+        }
+
+        .select-wrapper:hover .filter-label {
+            color: var(--accent-color);
+        }
+
+        .problem-area-row:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .chart-card .card-header h5 {
+            color: var(--text-primary);
+        }
+
+        .chart-card .card-header i {
+            color: var(--primary);
+        }
+
+        .problem-area-row th {
+            color: var(--text-secondary);
+        }
+
+        .problem-area-row td {
+            color: var(--text-primary);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div class="space-y-1">
+            <h1 class="text-2xl font-bold text-primary dark:text-white">Statistics Overview</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Detailed analysis of road issues and trends</p>
+        </div>
+        <button id="refreshStats" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+            <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+        </button>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="filter-card">
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label for="dateRangeFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date Range</label>
+                    <div class="relative">
+                        <select id="dateRangeFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">Last 7 Days</option>
+                            <option value="month">Last 30 Days</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="issueTypeFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issue Type</label>
+                    <div class="relative">
+                        <select id="issueTypeFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="all">All Types</option>
+                            <option value="Potholes">Potholes</option>
+                            <option value="Alligator Cracks">Alligator Cracks</option>
+                            <option value="Longitudinal Cracks">Longitudinal Cracks</option>
+                            <option value="Transverse Cracks">Transverse Cracks</option>
+                            <option value="Manhole Covers">Manhole Covers</option>
+                            <option value="Patchy Road Sections">Patchy Road Sections</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="statusFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                    <div class="relative">
+                        <select id="statusFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="all">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="fixed">Fixed</option>
+                            <option value="false_positive">False Positive</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="cityFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
+                    <div class="relative">
+                        <select id="cityFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="all">All Cities</option>
+                            <!-- Cities will be populated by JavaScript -->
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <div class="relative" x-data="{ open: false }">
+                    <button class="export-btn px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5" @click="open = !open">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-10 overflow-hidden">
+                        <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center" onclick="exportStats('csv')">
+                            <i class="fas fa-file-csv mr-2 text-primary"></i>Export as CSV
+                        </a>
+                        <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center" onclick="exportStats('excel')">
+                            <i class="fas fa-file-excel mr-2 text-primary"></i>Export as Excel
+                        </a>
+                        <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center" onclick="exportStats('pdf')">
+                            <i class="fas fa-file-pdf mr-2 text-primary"></i>Export as PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="stat-card primary">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2 id="totalIssues">{{ total_issues }}</h2>
+            <p class="mb-0">Total Issues</p>
+        </div>
+        <div class="stat-card secondary">
+            <i class="fas fa-calendar-day"></i>
+            <h2 id="issuesToday">{{ issues_today }}</h2>
+            <p class="mb-0">Issues Today</p>
+        </div>
+        <div class="stat-card accent">
+            <i class="fas fa-chart-line"></i>
+            <h2 id="dailyAverage">{{ "%.1f"|format(daily_average) }}</h2>
+            <p class="mb-0">Daily Average</p>
+        </div>
+        <div class="stat-card info">
+            <i class="fas fa-clock"></i>
+            <h2 id="lastUpdated">{{ current_time.strftime('%H:%M') }}</h2>
+            <p class="mb-0">Last Updated</p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="chart-card">
+            <div class="card-header">
+                <h5 class="text-lg font-semibold text-primary dark:text-white flex items-center">
+                    <i class="fas fa-chart-pie mr-2 text-primary"></i>
+                    Issue Type Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="issueTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <div class="card-header">
+                <h5 class="text-lg font-semibold text-primary dark:text-white flex items-center">
+                    <i class="fas fa-chart-bar mr-2 text-primary"></i>
+                    Status Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div class="chart-card lg:col-span-3">
+            <div class="card-header">
+                <h5 class="text-lg font-semibold text-primary dark:text-white flex items-center">
+                    <i class="fas fa-chart-line mr-2 text-primary"></i>
+                    Monthly Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-card lg:col-span-2">
+            <div class="card-header">
+                <h5 class="text-lg font-semibold text-primary dark:text-white flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2 text-primary"></i>
+                    Most Problematic Areas
+                </h5>
+            </div>
+            <div class="card-body p-2">
+                <table class="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Location</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Issues</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="problemAreasTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='stats.js') }}"></script>
+<script>
+    // Initialize refresh button
+    document.getElementById('refreshStats').addEventListener('click', function() {
+        updateStats();
+    });
+
+    // Add event listeners to filters
+    document.getElementById('dateRangeFilter').addEventListener('change', updateStats);
+    document.getElementById('issueTypeFilter').addEventListener('change', updateStats);
+    document.getElementById('statusFilter').addEventListener('change', updateStats);
+    document.getElementById('cityFilter').addEventListener('change', updateStats);
+</script>
+{% endblock %}

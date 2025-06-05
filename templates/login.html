@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-8rem)]">
+    <!-- Left side with logo -->
+    <div class="hidden lg:flex w-1/2 items-center justify-center">
+        <div class="relative h-[500px] w-[500px]">
+            <img src="{{ url_for('static', filename='LogoLight.png') }}" alt="Logo" class="logo-light h-full w-full object-contain transition-transform hover:scale-105">
+            <img src="{{ url_for('static', filename='LogoDark.png') }}" alt="Logo" class="logo-dark h-full w-full object-contain transition-transform hover:scale-105">
+        </div>
+    </div>
+
+    <!-- Right side with login form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="lg:hidden text-center mb-4">
+                <div class="relative h-24 w-24 mx-auto mb-2">
+                    <img src="{{ url_for('static', filename='LogoLight.png') }}" alt="Logo" class="logo-light h-full w-full object-contain transition-transform hover:scale-105">
+                    <img src="{{ url_for('static', filename='LogoDark.png') }}" alt="Logo" class="logo-dark h-full w-full object-contain transition-transform hover:scale-105">
+                </div>
+                <h2 class="text-xl font-bold">PaveScan</h2>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4 text-center">Welcome Back</h3>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Username</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400 group-focus-within:text-primary transition-colors duration-200"></i>
+                            </div>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required
+                                class="pl-10 w-full h-11 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100">
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Password</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400 group-focus-within:text-primary transition-colors duration-200"></i>
+                            </div>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required
+                                class="pl-10 w-full h-11 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 px-4 bg-primary hover:bg-primary-dark text-white rounded-xl transition-all duration-200 flex items-center justify-center font-medium shadow-md hover:shadow-lg active:shadow-sm">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

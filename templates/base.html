@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" class="light transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - PaveScan</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#3468c0',
+                            dark: '#2a539a',
+                        },
+                        secondary: '#86a7fc',
+                        accent: {
+                            DEFAULT: '#ffdd95',
+                            dark: '#ff9843',
+                        },
+                        success: '#28a745',
+                        danger: '#dc3545',
+                        warning: '#ffc107',
+                        info: '#17a2b8',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    transitionDuration: {
+                        '300': '300ms',
+                    },
+                },
+            },
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        .logo-light {
+            display: block;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .logo-dark {
+            display: block;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .dark .logo-light {
+            opacity: 0;
+        }
+        .dark .logo-dark {
+            opacity: 1;
+        }
+        
+        /* Add transition for all color changes */
+        body {
+            transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+        }
+        
+        /* Add transition for theme toggle button */
+        #themeToggle {
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+        
+        /* Add transition for navigation items */
+        nav a {
+            transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+    <nav class="bg-primary text-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <a href="{{ url_for('dashboard') }}" class="flex items-center">
+                    <div class="relative h-10 w-10 mr-2">
+                        <img src="{{ url_for('static', filename='LogoLight.png') }}" alt="Logo" class="logo-light h-10 transition-transform hover:scale-105">
+                        <img src="{{ url_for('static', filename='LogoDark.png') }}" alt="Logo" class="logo-dark h-10 transition-transform hover:scale-105">
+                    </div>
+                    <span class="hidden md:inline font-bold">PaveScan</span>
+                </a>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md hover:bg-primary-dark transition-all {% if request.endpoint == 'dashboard' %}bg-primary-dark{% endif %}">
+                        <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('map_page') }}" class="px-3 py-2 rounded-md hover:bg-primary-dark transition-all {% if request.endpoint == 'map_page' %}bg-primary-dark{% endif %}">
+                        <i class="fas fa-map mr-2"></i> Map
+                    </a>
+                    <a href="{{ url_for('stats') }}" class="px-3 py-2 rounded-md hover:bg-primary-dark transition-all {% if request.endpoint == 'stats' %}bg-primary-dark{% endif %}">
+                        <i class="fas fa-chart-bar mr-2"></i> Statistics
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 hover:bg-white/10 transition-all">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('logout') }}" class="px-3 py-2 border border-white rounded-md hover:bg-white/10 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-6 flex-grow">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if category == 'success' %}bg-success/10 text-success border border-success/20{% elif category == 'danger' %}bg-danger/10 text-danger border border-danger/20{% elif category == 'warning' %}bg-warning/10 text-warning border border-warning/20{% else %}bg-info/10 text-info border border-info/20{% endif %}">
+                        {{ message }}
+                        <button type="button" class="float-right" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="bg-primary text-white py-4 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2024 PaveScan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Theme switching functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.classList.add(savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                localStorage.setItem('theme', 'light');
+                updateThemeIcon('light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                updateThemeIcon('dark');
+            }
+        });
+        
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

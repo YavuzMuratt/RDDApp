@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div class="space-y-1">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Monitor and manage road issues in real-time</p>
+        </div>
+        <button id="refreshData" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+            <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-primary to-primary-dark text-white rounded-xl shadow-lg p-6 flex items-center transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner">
+                <i class="fas fa-road text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm opacity-80">Total Issues</p>
+                <h3 id="totalIssues" class="text-3xl font-bold">{{ total_issues }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-secondary to-secondary-dark text-white rounded-xl shadow-lg p-6 flex items-center transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner">
+                <i class="fas fa-calendar-day text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm opacity-80">Issues Today</p>
+                <h3 id="issuesToday" class="text-3xl font-bold">{{ issues_today }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-accent to-accent-dark text-white rounded-xl shadow-lg p-6 flex items-center transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner">
+                <i class="fas fa-chart-line text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm opacity-80">Most Common Issue</p>
+                <h3 id="mostCommonIssue" class="text-3xl font-bold">{{ issue_types|max(attribute='1')|first }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-danger to-danger-dark text-white rounded-xl shadow-lg p-6 flex items-center transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner">
+                <i class="fas fa-clock text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-sm opacity-80">Pending Issues</p>
+                <h3 id="pendingIssues" class="text-3xl font-bold">{{ status_distribution.get('pending', 0) }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
+            <div class="flex items-center mb-6">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i class="fas fa-chart-pie mr-2 text-primary"></i>
+                    Issue Type Distribution
+                </h5>
+            </div>
+            <div class="h-[300px]">
+                <canvas id="issueTypeChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
+            <div class="flex items-center mb-6">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i class="fas fa-chart-bar mr-2 text-primary"></i>
+                    Status Distribution
+                </h5>
+            </div>
+            <div class="h-[300px]">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issues Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="space-y-1">
+                    <h5 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                        <i class="fas fa-table mr-2 text-primary"></i>
+                        Recent Issues
+                    </h5>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Manage and track road issues</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="selectedCount" class="text-sm text-gray-500 dark:text-gray-400">0 items selected</span>
+                    <button class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5" onclick="exportToCSV()">
+                        <i class="fas fa-file-export mr-2"></i>Export CSV
+                    </button>
+                    <div class="relative" x-data="{ open: false }">
+                        <button id="bulkActionsDropdown" class="px-4 py-2 bg-secondary hover:bg-secondary-dark text-white rounded-lg transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5" @click="open = !open" disabled>
+                            <i class="fas fa-tasks mr-2"></i>Bulk Actions
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-700 rounded-xl shadow-xl z-10 overflow-hidden">
+                            <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="bulkUpdateStatus('pending')">
+                                <i class="fas fa-clock mr-2 text-yellow-500"></i>Set as Pending
+                            </a>
+                            <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="bulkUpdateStatus('in_progress')">
+                                <i class="fas fa-spinner mr-2 text-blue-500"></i>Set as In Progress
+                            </a>
+                            <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="bulkUpdateStatus('fixed')">
+                                <i class="fas fa-check mr-2 text-green-500"></i>Set as Fixed
+                            </a>
+                            <a href="#" class="block px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="bulkUpdateStatus('false_positive')">
+                                <i class="fas fa-times mr-2 text-red-500"></i>Set as False Positive
+                            </a>
+                            <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                            <a href="#" class="block px-4 py-3 text-sm text-danger hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="bulkDelete()">
+                                <i class="fas fa-trash mr-2"></i>Delete Selected
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="space-y-2">
+                    <label for="issueTypeFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issue Type</label>
+                    <div class="relative">
+                        <select id="issueTypeFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="">All Issue Types</option>
+                            <option value="Alligator Cracks">Alligator Cracks</option>
+                            <option value="Longitudinal Cracks">Longitudinal Cracks</option>
+                            <option value="Manhole Covers">Manhole Covers</option>
+                            <option value="Patchy Road Sections">Patchy Road Sections</option>
+                            <option value="Potholes">Potholes</option>
+                            <option value="Transverse Cracks">Transverse Cracks</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label for="statusFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                    <div class="relative">
+                        <select id="statusFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="fixed">Fixed</option>
+                            <option value="false_positive">False Positive</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label for="cityFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
+                    <div class="relative">
+                        <select id="cityFilter" class="w-full h-11 pl-4 pr-10 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                            <option value="">All Cities</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-gray-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl shadow-inner">
+                <table id="issuesTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gradient-to-r from-primary to-primary-dark text-white">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">
+                                <input type="checkbox" class="rounded text-primary focus:ring-primary" id="selectAll" onclick="toggleSelectAll()">
+                            </th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Image</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Type</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Timestamp</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Location</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Confidence</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+                <div class="flex items-center gap-3">
+                    <select id="itemsPerPage" class="rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary focus:ring focus:ring-primary/20 transition duration-200">
+                        <option value="10">10 items per page</option>
+                        <option value="25">25 items per page</option>
+                        <option value="100">100 items per page</option>
+                    </select>
+                    <span id="pageInfo" class="text-sm text-gray-500 dark:text-gray-400">Page 1 of 1</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="firstPage" disabled class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    <button id="prevPage" disabled class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-angle-left"></i>
+                    </button>
+                    <input type="number" id="pageInput" min="1" value="1" class="w-16 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary focus:ring focus:ring-primary/20 transition duration-200">
+                    <button id="nextPage" disabled class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-angle-right"></i>
+                    </button>
+                    <button id="lastPage" disabled class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Details Modal -->
+<div id="issueDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-modal="true" role="dialog">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" aria-hidden="true"></div>
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full mx-auto shadow-2xl transform transition-all duration-300">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Issue Details</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors" onclick="closeIssueDetails()">
+                    <span class="sr-only">Close</span>
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Modal body -->
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left column: Image -->
+                    <div class="space-y-4">
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden shadow-inner">
+                            <img id="modalIssueImage" src="" alt="Issue Image" class="w-full h-full object-cover">
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-medium text-gray-900 dark:text-white">Location</h4>
+                            <p id="modalIssueLocation" class="text-sm text-gray-600 dark:text-gray-300"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right column: Details -->
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-medium text-gray-900 dark:text-white">Issue Type</h4>
+                            <p id="modalIssueType" class="text-sm text-gray-600 dark:text-gray-300"></p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 dark:text-white">Status</h4>
+                            <div class="flex items-center gap-2">
+                                <p id="modalIssueStatus" class="text-sm text-gray-600 dark:text-gray-300"></p>
+                                <div class="relative" x-data="{ open: false }">
+                                    <button class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors" @click="open = !open">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-xl shadow-xl z-10 overflow-hidden">
+                                        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="updateIssueStatus('pending')">
+                                            <i class="fas fa-clock mr-2 text-yellow-500"></i>Set as Pending
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="updateIssueStatus('in_progress')">
+                                            <i class="fas fa-spinner mr-2 text-blue-500"></i>Set as In Progress
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="updateIssueStatus('fixed')">
+                                            <i class="fas fa-check mr-2 text-green-500"></i>Set as Fixed
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center" onclick="updateIssueStatus('false_positive')">
+                                            <i class="fas fa-times mr-2 text-red-500"></i>Set as False Positive
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 dark:text-white">Confidence</h4>
+                            <p id="modalIssueConfidence" class="text-sm text-gray-600 dark:text-gray-300"></p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 dark:text-white">Timestamp</h4>
+                            <p id="modalIssueTimestamp" class="text-sm text-gray-600 dark:text-gray-300"></p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 dark:text-white">Notes</h4>
+                            <textarea id="modalIssueNotes" class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary focus:ring focus:ring-primary/20 transition duration-200" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal footer -->
+            <div class="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors" onclick="closeIssueDetails()">
+                    Cancel
+                </button>
+                <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors" onclick="saveIssueChanges()">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script>
+    // Initialize refresh button
+    document.getElementById('refreshData').addEventListener('click', function() {
+        fetchAndDisplayRoadIssues();
+        updateDashboardStats();
+    });
+    
+    // Modal functions
+    function closeIssueDetails() {
+        document.getElementById('issueDetailsModal').classList.add('hidden');
+    }
+    
+    // Update the modal open function in your dashboard.js
+    function openIssueDetailsModal(issue) {
+        // Set modal values
+        document.getElementById('modalIssueId').textContent = issue.id;
+        document.getElementById('modalIssueType').textContent = issue.type;
+        document.getElementById('modalTimestamp').textContent = issue.timestamp;
+        document.getElementById('modalLocation').textContent = issue.location;
+        document.getElementById('modalConfidence').textContent = issue.confidence + '%';
+        document.getElementById('modalStatus').value = issue.status;
+        document.getElementById('modalNotes').value = issue.notes || '';
+        document.getElementById('modalIssueImage').src = issue.image_url;
+        
+        // Show modal
+        document.getElementById('issueDetailsModal').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

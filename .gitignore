@@ -1,0 +1,16 @@
+# Derleme çıktıları
+*.exe
+*.dll
+*.obj
+
+# Geçici dosyalar
+*.tmp
+*.log
+
+# IDE ve editör dosyaları
+.vscode/
+.idea/
+
+# Bağımlılık klasörleri
+node_modules/
+venv/ 
